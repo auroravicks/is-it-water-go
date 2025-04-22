@@ -34,125 +34,124 @@ type TIFFMetadata struct {
 }
 
 func Is_it_water(lat float64, lon float64) string {
-
 	zip_path, tile_id := utils.Zip_path(lat, lon, dataset_path)
 
-	_, err := os.Open(zip_path)
+	zipFile, err := os.Open(zip_path)
 	if err != nil {
 		fmt.Println("Could not find file: ", zip_path)
 		return "UNKNOWN"
 	}
+	defer zipFile.Close()
 
-	tif_name := tile_id + "_att.tif"
-
-	r, err := zip.OpenReader(zip_path)
+	fileInfo, err := zipFile.Stat()
 	if err != nil {
-		fmt.Println("Could not open file:", zip_path)
+		fmt.Println("Could not get file info:", err)
 		return "UNKNOWN"
 	}
-	defer r.Close()
+
+	r, err := zip.NewReader(zipFile, fileInfo.Size())
+	if err != nil {
+		fmt.Println("Could not open zip archive:", zip_path)
+		return "UNKNOWN"
+	}
+
+	tif_name := tile_id + "_att.tif"
+	var tifFile *zip.File
 	for _, f := range r.File {
-		if (f.Name) == tif_name {
-			rc, error := f.Open()
-			if error != nil {
-				fmt.Println("Could not open file: ", tif_name)
-				fmt.Println("Error:", error)
-				return "UNKNOWN"
-			}
-
-			defer rc.Close()
-			content, err := io.ReadAll(rc)
-			if err != nil {
-				fmt.Println("Failed to open file, ", err)
-				return "UNKNOWN"
-			}
-
-			readerAt := bytes.NewReader(content)
-
-			img, err := tiff.Parse(
-				bytes.NewReader(content),
-				tiff.DefaultTagSpace,
-				tiff.DefaultFieldTypeSpace,
-			)
-			if err != nil {
-				fmt.Println("Dataset object could not be opened: ", err)
-				return "UNKNOWN"
-			}
-
-			ifd := img.IFDs()[0]
-
-			metadata := extract_metadata(ifd)
-
-			tie_points := metadata.ModelTiePoint
-			scale := metadata.PixelScale
-			width, height := metadata.Width, metadata.Length
-
-			scaleX, scaleY := scale[0], scale[1]
-			originX, originY := tie_points[3], tie_points[4]
-
-			left := originX
-			top := originY
-			right := left + float64(width-1)*scaleX
-			bottom := top - float64(height-1)*scaleY
-
-			bboxWidth := right - left
-			bboxHeight := top - bottom
-
-			widthPct := (lon - left) / bboxWidth
-			heightPct := (lat - bottom) / bboxHeight
-
-			x := int(math.Floor(float64(width) * widthPct))
-			y := int(math.Floor(float64(height) * (1 - heightPct)))
-
-			if x < 0 || x >= width || y < 0 || y >= height {
-				fmt.Print("\n Exceptional X and Y values")
-				return "UNKNOWN"
-			}
-
-			stripIndex := int(math.Floor(float64(y) / float64(metadata.RowsPerStrip)))
-			offset := metadata.StripOffsets[stripIndex]
-			byteCount := metadata.StripByteCounts[stripIndex]
-
-			sectionReader := io.NewSectionReader(readerAt, int64(offset), int64(byteCount))
-			stripData := make([]byte, byteCount)
-			_, err = sectionReader.Read(stripData)
-			if err != nil {
-				fmt.Println("Error while opening up the file")
-				return "UNKNOWN"
-			}
-
-			rowStart := (y % metadata.RowsPerStrip) * width
-			pixelIndex := rowStart + x
-			pixelValue := stripData[pixelIndex]
-
-			switch pixelValue {
-			case 0:
-				return "LAND"
-			case 1:
-				return "OCEAN"
-			case 2:
-				return "RIVER"
-			case 3:
-				return "LAKE"
-			default:
-				return "UNKNOWN"
-			}
+		if f.Name == tif_name {
+			tifFile = f
+			break
 		}
 	}
-	return "UNKNOWN"
-}
 
-// func main() {
-// 	fmt.Println("\n", (is_it_water(0, 0)))
-// 	fmt.Println("\n", (is_it_water(9999, 9999)))
-// 	fmt.Println("\n", (is_it_water(46.67, 103.3)))
-// 	fmt.Println("\n", (is_it_water(-10.47, 105.57)))
-// 	fmt.Println("\n", (is_it_water(30.03, 31.22)))
-// 	fmt.Println("\n", (is_it_water(45.295504, 12.61337)))
-// 	fmt.Println("\n", (is_it_water(44.35953, -2.765543)))
-// 	fmt.Println("\n", (is_it_water(6.56, 0)))
-// 	fmt.Println("\n", (is_it_water(0, -69)))
-// }
+	if tifFile == nil {
+		fmt.Println("Could not find TIFF file: ", tif_name)
+		return "UNKNOWN"
+	}
+
+	rc, err := tifFile.Open()
+	if err != nil {
+		fmt.Println("Could not open TIFF file:", tif_name)
+		return "UNKNOWN"
+	}
+	defer rc.Close()
+
+	content, err := io.ReadAll(rc)
+	if err != nil {
+		fmt.Println("Failed to read TIFF file:", err)
+		return "UNKNOWN"
+	}
+
+	readerAt := bytes.NewReader(content)
+	img, err := tiff.Parse(readerAt, tiff.DefaultTagSpace, tiff.DefaultFieldTypeSpace)
+	if err != nil {
+		fmt.Println("Error parsing TIFF file:", err)
+		return "UNKNOWN"
+	}
+
+	ifd := img.IFDs()[0]
+	metadata := extract_metadata(ifd)
+
+	tie_points := metadata.ModelTiePoint
+	scale := metadata.PixelScale
+	width, height := metadata.Width, metadata.Length
+
+	scaleX, scaleY := scale[0], scale[1]
+	originX, originY := tie_points[3], tie_points[4]
+
+	left := originX
+	top := originY
+	right := left + float64(width)*scaleX
+	bottom := top - float64(height)*scaleY
+
+	bboxWidth := right - left
+	bboxHeight := top - bottom
+
+	widthPct := (lon - left) / bboxWidth
+	heightPct := (lat - bottom) / bboxHeight
+
+	x := int(math.Floor(float64(width) * widthPct))
+	y := int(math.Floor(float64(height) * (1 - heightPct)))
+
+	fmt.Println(x, y)
+	if x < 0 || x >= width || y < 0 || y >= height {
+		fmt.Println("Exceptional X and Y values")
+		return "UNKNOWN"
+	} else if x == width {
+		x -= 1
+	} else if y == height {
+		y -= 1
+	}
+
+	stripIndex := int(math.Floor(float64(y) / float64(metadata.RowsPerStrip)))
+	offset := metadata.StripOffsets[stripIndex]
+	byteCount := metadata.StripByteCounts[stripIndex]
+
+	sectionReader := io.NewSectionReader(readerAt, int64(offset), int64(byteCount))
+	stripData := make([]byte, byteCount)
+	_, err = sectionReader.Read(stripData)
+	if err != nil {
+		fmt.Println("Error parsing TIFF file: ", err)
+		return "UNKNOWN"
+	}
+
+	rowStart := (y % metadata.RowsPerStrip) * width
+	pixelIndex := rowStart + x
+	pixelValue := stripData[pixelIndex]
+
+	switch pixelValue {
+	case 0:
+		return "LAND"
+	case 1:
+		return "OCEAN"
+	case 2:
+		return "RIVER"
+	case 3:
+		return "LAKE"
+	default:
+		return "UNKNOWN"
+	}
+}
 
 func extract_metadata(ifd tiff.IFD) TIFFMetadata {
 	metadata := TIFFMetadata{}

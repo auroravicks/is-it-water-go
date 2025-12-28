@@ -34,7 +34,6 @@ func SingleInt(field tiff.Field) int {
 	return int(bo.Uint16(raw[0*4 : (1)*4]))
 }
 
-// FloatArray now uses big.Float for precision.
 func FloatArray(field tiff.Field) []float64 {
 	raw := field.Value().Bytes()
 	order := field.Value().Order()
@@ -42,15 +41,12 @@ func FloatArray(field tiff.Field) []float64 {
 
 	for i := range floats {
 		bits := order.Uint64(raw[i*8 : (i+1)*8])
-
-		// Convert to float64 directly if possible
 		floats[i] = math.Float64frombits(bits)
 	}
 
 	return floats
 }
 
-// Rational now uses big.Float to handle rational numbers more precisely.
 func Rational(field tiff.Field) float64 {
 	raw := field.Value().Bytes()
 	order := field.Value().Order()
@@ -58,18 +54,14 @@ func Rational(field tiff.Field) float64 {
 	numerator := order.Uint32(raw[0:4])
 	denominator := order.Uint32((raw[4:8]))
 
-	// Using big.Int to handle large numbers if needed
 	bfNum := new(big.Float).SetInt64(int64(numerator))
 	bfDen := new(big.Float).SetInt64(int64(denominator))
 
-	// Perform precise division
 	result := new(big.Float).Quo(bfNum, bfDen)
 
-	// Round the result to the desired precision and return as float64
-	result = result.SetPrec(256) // Set higher precision for operations
+	result = result.SetPrec(256)
 	result = result.SetMode(big.ToNearestEven)
 
-	// Return the float64 value
 	value, _ := result.Float64()
 	return value
 }

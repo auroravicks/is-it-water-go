@@ -137,8 +137,14 @@ with approximately 30 m resolution at the equator. Dataset installation,
 checksums, attribution, and citation guidance live in
 [`auroravicks/is-on-water-dataset`](https://github.com/auroravicks/is-on-water-dataset).
 
-The implementation was inspired by the original
-[`NiciusB/is-on-water`](https://github.com/NiciusB/is-on-water) project by Nicius Balbona.
+## Acknowledgements
+
+This Go implementation is based on the concept and dataset approach established
+by Nicius Balbona's original
+[`NiciusB/is-on-water`](https://github.com/NiciusB/is-on-water) project. Credit
+for the original Is On Water project and API concept belongs to its author and
+contributors. This port is independently maintained and is not an official
+upstream release.
 
 ## Related project
 

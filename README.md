@@ -149,3 +149,9 @@ upstream release.
 ## Related project
 
 Prefer Python and FastAPI? See [auroravicks/is-on-water](https://github.com/auroravicks/is-on-water).
+
+## License
+
+Licensed under the [ISC License](LICENSE), matching the license declared by the
+original Is On Water project. ASTWBD dataset files are governed separately; see
+the dataset repository's [data notice](https://github.com/auroravicks/is-on-water-dataset/blob/main/DATA-NOTICE.md).

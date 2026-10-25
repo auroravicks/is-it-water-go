@@ -12,7 +12,7 @@ import (
 	"github.com/google/tiff"
 )
 
-const dataset_path = "./dataset"
+const defaultDatasetPath = "./dataset"
 
 type TIFFMetadata struct {
 	Width                     int
@@ -34,7 +34,11 @@ type TIFFMetadata struct {
 }
 
 func Is_it_water(lat float64, lon float64) string {
-	zip_path, tile_id := utils.Zip_path(lat, lon, dataset_path)
+	datasetPath := os.Getenv("DATASET_PATH")
+	if datasetPath == "" {
+		datasetPath = defaultDatasetPath
+	}
+	zip_path, tile_id := utils.Zip_path(lat, lon, datasetPath)
 
 	zipFile, err := os.Open(zip_path)
 	if err != nil {

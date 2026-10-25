@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Is It Water? Go</title>
+  <desc id="desc">A stylized ocean and coordinate marker for the Go water lookup API.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#071a2b"/><stop offset="1" stop-color="#0b7285"/></linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22b8cf"/><stop offset="1" stop-color="#4dabf7"/></linearGradient>
+  </defs>
+  <rect width="1200" height="360" rx="28" fill="url(#sky)"/>
+  <circle cx="1020" cy="88" r="150" fill="#74c0fc" opacity=".08"/>
+  <circle cx="1040" cy="90" r="92" fill="none" stroke="#a5d8ff" opacity=".18" stroke-width="2"/>
+  <path d="M0 252C150 206 249 296 400 250s252-18 387 22 278-50 413-17v105H0z" fill="url(#wave)" opacity=".85"/>
+  <path d="M0 292c166-47 282 50 443 1s279 34 431 18 207-50 326-12v61H0z" fill="#087f9c" opacity=".72"/>
+  <g transform="translate(930 55)"><path d="M90 0C40.3 0 0 40.3 0 90c0 68 90 160 90 160s90-92 90-160C180 40.3 139.7 0 90 0z" fill="#e7f5ff"/><circle cx="90" cy="90" r="38" fill="#0b7285"/><path d="M70 91c12-7 28-7 40 0s25 7 38 0" fill="none" stroke="#99e9f2" stroke-width="9" stroke-linecap="round"/></g>
+  <text x="72" y="128" fill="#e7f5ff" font-family="Inter,Segoe UI,sans-serif" font-size="28" font-weight="600" letter-spacing="4">GEOSPATIAL API</text>
+  <text x="68" y="205" fill="white" font-family="Inter,Segoe UI,sans-serif" font-size="68" font-weight="800">Is It Water?</text>
+  <text x="72" y="248" fill="#c5f6fa" font-family="Inter,Segoe UI,sans-serif" font-size="24">Fast coordinate classification, written in Go.</text>
+</svg>
